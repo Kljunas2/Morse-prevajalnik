@@ -15,126 +15,118 @@ import argparse
 
 
 code = {"A" : ".-",\
-	"B" : "-...",\
-	"C" : "-.-.",\
-	"\u010c" : "-..-",\
-	"D" : "-..",\
-	"E" : ".",\
-	"F" : "..-.",\
-	"G" : "--.",\
-	"H" : "....",\
-	"I" : "..",\
-	"J" : ".---",\
-	"K" : "-.-",\
-	"L" : ".-..",\
-	"M" : "--",\
-	"N" : "-.",\
-	"O" : "---",\
-	"P" : ".--.",\
-	"Q" : "--.-",\
-	"R" : ".-.",\
-	"S" : "...",\
-	"\u0160" : "----",\
-	"T" : "-",\
-	"U" : "..-",\
-	"V" : "...-",\
-	"W" : ".--",\
-	"X" : "-..-",\
-	"Y" : "-.--",\
-	"W" : ".--",\
-	"Z" : "--..",\
-	"\u017d" : ".--",\
-	"1" : ".----",\
-	"2" : "..---",\
-	"3" : "...--",\
-	"4" : "....-",\
-	"5" : ".....",\
-	"6" : "-....",\
-	"7" : "--...",\
-	"8" : "---..",\
-	"9" : "----.",\
-	"0" : "-----"}
+    "B" : "-...",\
+    "C" : "-.-.",\
+    "Č" : "-..-",\
+    "D" : "-..",\
+    "E" : ".",\
+    "F" : "..-.",\
+    "G" : "--.",\
+    "H" : "....",\
+    "I" : "..",\
+    "J" : ".---",\
+    "K" : "-.-",\
+    "L" : ".-..",\
+    "M" : "--",\
+    "N" : "-.",\
+    "O" : "---",\
+    "P" : ".--.",\
+    "Q" : "--.-",\
+    "R" : ".-.",\
+    "S" : "...",\
+    "Š" : "----",\
+    "T" : "-",\
+    "U" : "..-",\
+    "V" : "...-",\
+    "W" : ".--",\
+    "X" : "-..-",\
+    "Y" : "-.--",\
+    "W" : ".--",\
+    "Z" : "--..",\
+    "Ž" : ".--",\
+    "1" : ".----",\
+    "2" : "..---",\
+    "3" : "...--",\
+    "4" : "....-",\
+    "5" : ".....",\
+    "6" : "-....",\
+    "7" : "--...",\
+    "8" : "---..",\
+    "9" : "----.",\
+    "0" : "-----"}
 
+def convertLetter(letter):
+    if letter.isalnum():
+        return code[letter.upper()]
+
+def sanitize(text):
+    return text
 
 def convert(text):
-	new = []
-	text = text.split(" ")
-	for i in range(0, len(text)):
-		new.append([])
-		#print(repr(text[i]))
-		for letter in text[i]:
-			if letter.isalnum():
-				n = letter.upper().decode("utf8")
-				new[i].append(code[n])
-			elif letter == "\n":
-				new[i].append("a")
-	while [] in new:
-		new.remove([])
-	return new
+    text = sanitize(text)
+    words = text.split()
+    return [[convertLetter(letter) for letter in w] for w in words]
+
+def format_output(fmt, array):
+    return fmt[1].join([fmt[0].join(word) for word in array])
 
 
 def path(path, io):
-	if io == "i":
-		try:
-			return open(path, "r")
-		except:
-			return False
-	elif io == "o":
-		try:
-			open(path, "r").close()
-			ask = input("File already exists. Do you want to overwrite it? (Y/n)\n")
-			print(repr(ask))
-			if ask.upper in ["", "YES", "Y"]:
-				#return open(path, "w")
-				return False
-			else:
-				print("Output not written into file. Exiting")
-				return False
-		except:
-			try:
-				return open(path, "w")
-			except:
-				print("Cannot create new file.")
-				return False
+    if io == "i":
+        try:
+            return open(path, "r")
+        except:
+            return None
+    elif io == "o":
+        try:
+            open(path, "r").close()
+            ask = input("File already exists. Do you want to overwrite it? (Y/n)\n")
+            print(repr(ask))
+            if ask.upper in ["", "YES", "Y"]:
+                return open(path, "w")
+            else:
+                print("Output not written into file. Exiting")
+                return None
+        except:
+            try:
+                return open(path, "w")
+            except:
+                print("Cannot create new file.")
+                return None
 
-def format_output(array):
-	new = ""
-	for i in array:
-		for j in i:
-			j = parsed["format"][2] if j == "\n" else ""
-		new += parsed["format"][0].join(i)
-		new += (parsed["format"][1])
-	return new
 
+
+def main():
+    ap = argparse.ArgumentParser(prog="python script.py",
+        description="Translate text into morse code. If -i is not defined, it will take standard input as an input string")
+    ap.add_argument("-i", "--input", dest="input", metavar="path", help="path to input file")
+    ap.add_argument("-o", "--output", dest="output", metavar="path", help="path to output file")
+    ap.add_argument("-p", "--print", action="store_true",
+            help="Prints the converted text into stdandard output.")
+    ap.add_argument("-f", "--format", default=["/", "//"], nargs=2,
+            metavar=("letter", "word"),
+            help="Defines formatting of output.")#[letter, word]
+    parsed = vars(ap.parse_args())
+    fmt = parsed["format"]
+    output = ""
+    if parsed["input"] != None:
+        if path(parsed["input"], "i"):
+            input = format_output(fmt, convert(path(parsed["input"], "i").read()))
+        else:
+            print("Cannot open input file.")
+    else:
+        try:
+            print("reading")
+            output = format_output(convert(sys.stdin.read()))
+        except:
+            sys.exit("Provide some input to translate.")
+    if parsed["print"]:
+        try:
+            print(output)
+        except:
+            pass
+    if parsed["output"] != None:
+        path(parsed["output"], "o").write(output)
 
 if __name__ == "__main__":
-	if len(sys.argv) <= 1:
-		sys.argv.append("-h")
-	ap = argparse.ArgumentParser(prog="python script.py",
-		description="Translate text into morse code. If -i is not defined, it will take standard input as an input string")
-	ap.add_argument("-i", "--input", dest="input", metavar="path", help="path to input file")
-	ap.add_argument("-o", "--output", dest="output", metavar="path", help="path to output file")
-	ap.add_argument("-p", "--print", action="store_true",
-			help="Prints the converted text into stdandard output.")
-	ap.add_argument("-f", "--format", default=["/", "//", "//\n//"], nargs=3,
-			metavar=("letter", "word", "newline"),
-			help="Defines formatting of output.")#[letter, word, newline]
-	parsed = vars(ap.parse_args())
-	if parsed["input"] != None:
-		if path(parsed["input"], "i"):
-			output = format_output(convert(path(parsed["input"], "i").read()))
-		else:
-			print("Cannot open input file.")
-	else:
-		try:
-			output = format_output(convert(sys.stdin.read()))
-		except:
-			sys.exit("Provide some input to translate.")
-	if parsed["print"]:
-		try:
-			print(output)
-		except:
-			pass
-	if parsed["output"] != None:
-		path(parsed["output"], "o").write(output)
-
+    main()
